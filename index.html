@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#FF6900">
+  <title>Campaign Tracker</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <button id="homeBtn" class="brand" title="All campaigns">
+      <span class="logo">CT</span>
+      <span class="brand-text">Campaign Tracker</span>
+    </button>
+    <div class="topbar-actions">
+      <button id="newBtn" class="btn primary">+ New campaign</button>
+    </div>
+  </header>
+
+  <main id="app">
+    <!-- HOME -->
+    <section id="view-home" class="view">
+      <div class="page-head">
+        <h1>Campaigns</h1>
+        <p class="muted">Upload one retail elements file per campaign. Every campaign stays saved on this device, so you can open its report any time.</p>
+      </div>
+      <div id="campaignList" class="cards"></div>
+      <div id="emptyState" class="empty hidden">
+        <p class="empty-title">No campaigns yet</p>
+        <p class="muted">Tap <b>+ New campaign</b> and upload your Excel or CSV file to get started.</p>
+      </div>
+      <div class="backup">
+        <h2>Backup &amp; sharing</h2>
+        <p class="muted">Save all campaigns to one backup file to move them to another phone or computer, or to send to a colleague who can import it.</p>
+        <div class="row">
+          <button id="backupBtn" class="btn">Save backup file</button>
+          <label class="btn">Import backup file<input id="importInput" type="file" accept=".json,application/json" hidden></label>
+        </div>
+      </div>
+    </section>
+
+    <!-- UPLOAD / MAPPING -->
+    <section id="view-upload" class="view hidden">
+      <div class="page-head">
+        <h1 id="uploadTitle">New campaign</h1>
+        <p class="muted">Upload the campaign's store-level file (.xlsx, .xls or .csv): one row per store, with element quantities in columns.</p>
+      </div>
+      <div class="panel">
+        <label class="field"><span>Campaign name</span>
+          <input id="campName" type="text" placeholder="e.g. Diwali With Mi 2026" maxlength="80">
+        </label>
+        <label class="field"><span>Data file</span>
+          <input id="fileInput" type="file" accept=".xlsx,.xls,.xlsm,.csv">
+        </label>
+        <p id="fileInfo" class="muted small"></p>
+      </div>
+
+      <div id="mapping" class="panel hidden">
+        <h2>Check the columns</h2>
+        <p class="muted small">These were detected automatically. Change them only if something looks wrong.</p>
+        <div class="grid2">
+          <label class="field"><span>Sheet</span><select id="sheetSel"></select></label>
+          <label class="field"><span>Header row</span><select id="headerSel"></select></label>
+          <label class="field"><span>Store code column</span><select id="idSel"></select></label>
+          <label class="field"><span>Zone column</span><select id="zoneSel"></select></label>
+        </div>
+        <h3>Report by (Xi State, Retailer Type, Category…)</h3>
+        <div id="dimChecks" class="checks"></div>
+        <h3>Element columns (quantities)</h3>
+        <div id="elChecks" class="checks"></div>
+        <p id="mapWarn" class="warn hidden"></p>
+        <div class="row end">
+          <button id="cancelUpload" class="btn">Cancel</button>
+          <button id="saveCampaign" class="btn primary">Save campaign</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CAMPAIGN REPORT -->
+    <section id="view-report" class="view hidden">
+      <div class="page-head report-head">
+        <div>
+          <p class="eyebrow" id="repMeta"></p>
+          <h1 id="repTitle"></h1>
+        </div>
+        <div class="row wrap">
+          <button id="exportBtn" class="btn primary">Export to Excel</button>
+          <button id="editBtn" class="btn">Columns</button>
+          <button id="replaceBtn" class="btn">Replace file</button>
+          <button id="deleteBtn" class="btn danger">Delete</button>
+        </div>
+      </div>
+
+      <div class="chips" id="zoneChips" role="tablist" aria-label="Zone"></div>
+
+      <div class="kpis">
+        <div class="kpi"><span class="kpi-label">Total stores</span><span class="kpi-val" id="kStores"></span></div>
+        <div class="kpi"><span class="kpi-label">Covered stores</span><span class="kpi-val" id="kCovered"></span><span class="kpi-sub" id="kCovPct"></span></div>
+        <div class="kpi"><span class="kpi-label">Total element qty</span><span class="kpi-val accent" id="kQty"></span></div>
+      </div>
+
+      <div class="panel">
+        <h2>Element summary</h2>
+        <div id="elBars" class="bars"></div>
+      </div>
+
+      <div class="panel">
+        <div class="table-head">
+          <div class="tabs" id="dimTabs" role="tablist" aria-label="Report by"></div>
+          <div class="row wrap">
+            <select id="showSel" aria-label="Show">
+              <option value="both">Qty (stores)</option>
+              <option value="qty">Qty only</option>
+              <option value="stores">Stores only</option>
+            </select>
+            <select id="orientSel" aria-label="Layout">
+              <option value="el-rows">Elements as rows</option>
+              <option value="dim-rows">Elements as columns</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap"><table id="repTable"></table></div>
+        <p class="muted small" id="tableNote"></p>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+
+  <script src="vendor/xlsx.full.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
