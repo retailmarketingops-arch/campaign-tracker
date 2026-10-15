@@ -1,1 +1,71 @@
+name: Build Android APK
 
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Arrange app files into folders
+        run: |
+          mkdir -p www/vendor www/icons assets
+          for f in index.html app.js styles.css sw.js manifest.webmanifest; do
+            if [ -f "$f" ] && [ ! -f "www/$f" ]; then cp "$f" www/; fi
+          done
+          for f in icon-192.png icon-512.png; do
+            if [ -f "$f" ] && [ ! -f "www/icons/$f" ]; then cp "$f" www/icons/; fi
+          done
+          for f in icon-only.png icon-foreground.png icon-background.png; do
+            if [ -f "$f" ] && [ ! -f "assets/$f" ]; then cp "$f" assets/; fi
+          done
+          if [ -f xlsx.full.min.js ] && [ ! -f www/vendor/xlsx.full.min.js ]; then cp xlsx.full.min.js www/vendor/; fi
+          if [ ! -f www/vendor/xlsx.full.min.js ]; then
+            npm pack xlsx@0.18.5 --silent
+            tar xzf xlsx-0.18.5.tgz
+            cp package/dist/xlsx.full.min.js www/vendor/
+            rm -rf package xlsx-0.18.5.tgz
+          fi
+          if [ ! -f capacitor.config.json ]; then
+            echo '{"appId":"com.retailmarketing.campaigntracker","appName":"Campaign Tracker","webDir":"www"}' > capacitor.config.json
+          fi
+          if [ ! -f package.json ]; then npm init -y > /dev/null; fi
+          echo "App files:"; find www assets -type f | sort
+
+      - name: Install packages
+        run: |
+          npm install @capacitor/core@^8 @capacitor/android@^8 @capacitor/filesystem@^8 @capacitor/share@^8
+          npm install --save-dev @capacitor/cli@^8 @capacitor/assets@^3
+
+      - name: Create Android project
+        run: |
+          npx cap add android
+          npx @capacitor/assets generate --android || echo "Icon generation skipped"
+          npx cap sync android
+
+      - name: Build APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CampaignTracker-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
